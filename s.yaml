@@ -1,0 +1,238 @@
+openapi: 3.0.1
+info:
+  title: ESP Auditor�a API
+  description: 'Espa�a Negocios Auditor�a API'
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: '1.0'
+externalDocs:
+  description: Encontrar m�s acerca de OpenAPI Sprecification
+  url: 'https://spec.openapis.org/oas/v3.0.1#openapi-specification'
+servers:
+  - url: 'https://webservices.es.mapfre.net/gesycore_servicios_bbe-wen/api/audit/1.0'
+    description: 'Production'
+  - url: 'https://webservices.pre.mapfre.net/gesycore_servicios_bbe-wen/api/audit/1.0'
+    description: 'Preproduction'
+  - url: 'https://webservices.desa.mapfre.net/gesycore_servicios_bbe-wen/api/audit/1.0'
+    description: 'Integration external access'
+  - url: 'https://webservicesic.desa.mapfre.net/gesycore_servicios_bbe-wen/api/audit/1.0'
+    description: Continuous Integration access
+tags:
+  - name: Auditoria
+    description: Crear un sistema de registro para auditar acciones de usuarios
+paths:
+  '/audit':
+    post:
+      tags:
+        - Auditoria
+      summary: Operaci�n que permite registrar en tabla de base de datos todos los par�metros requeridos que el servicio envia.
+      operationId: postAudit
+      parameters:
+        - $ref: '#/components/parameters/Accept-Language'
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionCrearAuditoria'
+      responses:
+        '201':
+          description: operaci�n satisfactoria
+          content:
+            'application/json':
+              schema:
+                type: object
+                properties:
+                  resultado:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resultado'
+        '400':
+          description: Request error ('400'). Para detalles, revisar documento de tablas parametrizadas [Document_Name]
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/UncontrolledError'
+      security:
+        - mapfre_auth:
+            - write
+            - read
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    Resultado:
+      type: object
+      properties:
+        resultado:
+          type: string
+          description: Resultado de la operaci�n.
+    Error:
+      required:
+        - aplicacion
+        - codigo
+        - errores
+        - mensaje
+        - fechaYHora
+        - tipo
+      type: object
+      properties:
+        codigo:
+          type: string
+          description: C�digo de Error
+          example: '403'
+        mensaje:
+          type: string
+          description: Descripci�n Error
+          example: Internal error in the service
+        tipo:
+          type: string
+          description: Tipo de Error
+          example: Null pointer
+        contexto:
+          type: string
+          description: Contetco del error
+          example: Process query action
+        excepcion:
+          type: string
+          description: Excepci�n
+          example: NullPointerException
+        componente:
+          type: string
+          description: Componente con Error
+          example: ProcessImpl
+        aplicacion:
+          type: string
+          description: Aplicaci�n con error
+          example: Process_Backend
+        fechaYHora:
+          type: string
+          description: Fecha y hora del error
+          format: date-time
+          example: '2019-01-13T18:27:41.511Z'
+        errores:
+          type: array
+          description: Lista de errores
+          items:
+            $ref: '#/components/schemas/ComponenteError'
+    ComponenteError:
+      required:
+        - codigo
+      type: object
+      properties:
+        codigo:
+          type: string
+          description: C�digo de Error
+          example: '403'
+        mensaje:
+          type: string
+          description: Mensaje de Error
+          example: Error Interno  
+    PeticionCrearAuditoria:
+      required :
+        - codigoUsuario
+        - identificadorAplicacion
+        - identificadorOperacion
+        - IP
+        - datosEntrada
+        - datosSalida
+      type: object
+      properties:
+        codigoUsuario:
+          type: string
+          description: C�digo de Usuario de la aplicaci�n.
+          example: ''
+        identificadorAplicacion:
+          type: string
+          description: Identificador Aplicaci�n.
+          example: ''
+        identificadorOperacion:
+          type: string
+          description: Identificador Operaci�n.
+          example: ''
+        IP:
+          type: string
+          description: Direcci�n IP.
+          example: '200.101.256.3'
+        datosEntrada:
+          type: string
+          description: Datos de entrada.
+          example: ''
+        datosSalida:
+          type: string
+          description: Datos de salida.
+          example: ''
+  requestBodies:  
+    PeticionCrearAuditoria:
+      description : Crear registro de auditoria
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PeticionCrearAuditoria'
+  responses:
+    Forbidden:
+      description: Acceso prohibido ('403')
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Recurso especificado no fue encontrado ('404')
+      content:
+        '*/*':
+          schema:
+            $ref: '#/components/schemas/Error'
+    RequestError:
+      description: Error de petici�n ('400')
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: No Autorizado ('401')
+      content:
+        '*/*':
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnsupportedMediaType:
+      description: El servidor no admite el media-type en Content-type de la solicitud ('415')
+      content:
+        '*/*':
+          schema:
+            $ref: '#/components/schemas/Error'
+    UncontrolledError:
+      description: Error desconocido ('500')
+      content:
+        '*/*':
+          schema:
+            $ref: '#/components/schemas/Error'
+                     
+  parameters:
+    Accept-Language:
+      name: Lenguaje aceptado
+      in: header
+      required: true
+      schema:
+        type: string
+        enum:
+          - es-ES
+        default: es-ES
+ 
+  securitySchemes:
+    name:
+      type: apiKey
+      name: api_key
+      in: query
+    mapfre_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: 'http://auth.mapfre.com/oauth/'
+          scopes:
+            read: Grants read access
+            write: Grants write access
+            admin: Grants access to admin operations
